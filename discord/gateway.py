@@ -33,8 +33,7 @@ import struct
 import sys
 import time
 import threading
-import traceback
-import zlib
+# import zlib
 
 import aiohttp
 
@@ -278,8 +277,8 @@ class DiscordWebSocket:
         # ws related stuff
         self.session_id = None
         self.sequence = None
-        self._zlib = zlib.decompressobj()
-        self._buffer = bytearray()
+        # self._zlib = zlib.decompressobj()
+        # self._buffer = bytearray()
         self._close_code = None
         self._rate_limiter = GatewayRatelimiter()
 
@@ -410,18 +409,18 @@ class DiscordWebSocket:
     async def received_message(self, msg):
         self._dispatch('socket_raw_receive', msg)
 
-        if type(msg) is bytes:
-            self._buffer.extend(msg)
+        # if type(msg) is bytes:
+        #     self._buffer.extend(msg)
 
-            if len(msg) >= 4:
-                if msg[-4:] == b'\x00\x00\xff\xff':
-                    msg = self._zlib.decompress(self._buffer)
-                    msg = msg.decode('utf-8')
-                    self._buffer = bytearray()
-                else:
-                    return
-            else:
-                return
+        #     if len(msg) >= 4:
+        #         if msg[-4:] == b'\x00\x00\xff\xff':
+        #             msg = self._zlib.decompress(self._buffer)
+        #             msg = msg.decode('utf-8')
+        #             self._buffer = bytearray()
+        #         else:
+        #             return
+        #     else:
+        #         return
 
         msg = json.loads(msg)
 
