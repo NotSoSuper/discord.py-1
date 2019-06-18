@@ -363,7 +363,7 @@ class DiscordWebSocket:
                     '$referrer': '',
                     '$referring_domain': ''
                 },
-                'compress': True,
+                'compress': False,
                 'large_threshold': 250,
                 'guild_subscriptions': self._connection.guild_subscriptions,
                 'v': 3
