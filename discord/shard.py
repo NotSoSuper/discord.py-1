@@ -29,6 +29,7 @@ import itertools
 import logging
 
 import aiohttp
+from aioredis_lock import RedisLock
 
 from .state import AutoShardedConnectionState
 from .client import Client
@@ -383,17 +384,19 @@ class AutoShardedClient(Client):
                 await self._connection.chunk_guild(guild)
 
     async def launch_shard(self, gateway, shard_id, *, initial=False):
-        try:
-            coro = DiscordWebSocket.from_client(self, initial=initial, gateway=gateway, shard_id=shard_id)
-            ws = await asyncio.wait_for(coro, timeout=180.0)
-        except Exception:
-            log.exception('Failed to connect for shard_id: %s. Retrying...', shard_id)
-            await asyncio.sleep(5.0)
-            return await self.launch_shard(gateway, shard_id)
-
-        # keep reading the shard while others connect
-        self.__shards[shard_id] = ret = Shard(ws, self, self.__queue.put_nowait)
-        ret.launch()
+        async with RedisLock(
+            self.rpc.pool,
+            key="identify",
+            timeout=200,
+            wait_timeout=None
+        ):
+            try:
+                coro = DiscordWebSocket.from_client(self, initial=initial, gateway=gateway, shard_id=shard_id)
+                ws = await asyncio.wait_for(coro, timeout=180.0)
+            except Exception:
+                log.exception('Failed to connect for shard_id: %s. Retrying...', shard_id)
+                await asyncio.sleep(5.0)
+                return await self.launch_shard(gateway, shard_id)
 
     async def launch_shards(self):
         if self.shard_count is None:
