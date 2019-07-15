@@ -978,7 +978,7 @@ class ConnectionState:
                     coro = voice.on_voice_state_update(data)
                     asyncio.ensure_future(logging_coroutine(coro, info='Voice Protocol voice state update handler'))
 
-            guild, member, before, after = guild._update_voice_state(data, channel_id)
+            member, before, after = guild._update_voice_state(data, channel_id)
             if member is not None:
                 if flags.voice:
                     if channel_id is None and flags.value == MemberCacheFlags.voice.flag:
