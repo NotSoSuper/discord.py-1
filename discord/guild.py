@@ -238,7 +238,7 @@ class Guild(Hashable):
             try:
                 member = Member(data=data['member'], state=self._state, guild=self)
             except KeyError:
-                member = None
+                member = user_id
 
         return member, before, after
 
