@@ -371,7 +371,27 @@ class ConnectionState:
         ws = self._get_websocket(guild_id) # This is ignored upstream
         await ws.request_chunks(guild_id, query=query, limit=limit, nonce=nonce)
 
-    async def query_members(self, guild, query, limit, user_ids, cache):
+    async def request_offline_members(self, guilds):
+        # get all the chunks
+        chunks = []
+        for guild in guilds:
+            chunks.extend(self.chunks_needed(guild))
+
+        # we only want to request ~75 guilds per chunk request.
+        splits = [guilds[i:i + 75] for i in range(0, len(guilds), 75)]
+        for split in splits:
+            await self.chunker([g.id for g in split])
+
+        # wait for the chunks
+        if chunks:
+            try:
+                await utils.sane_wait_for(chunks, timeout=len(chunks) * 30.0)
+            except asyncio.TimeoutError:
+                log.warning('Somehow timed out waiting for chunks.')
+            else:
+                log.info('Finished requesting guild member chunks for %d guilds.', len(guilds))
+
+    async def query_members(self, guild, query, limit, user_ids, cache, presences):
         guild_id = guild.id
         ws = self._get_websocket(guild_id)
         if ws is None:
@@ -383,7 +403,7 @@ class ConnectionState:
 
         try:
             # start the query operation
-            await ws.request_chunks(guild_id, query=query, limit=limit, user_ids=user_ids, nonce=request.nonce)
+            await ws.request_chunks(guild_id, query=query, limit=limit, user_ids=user_ids, presences=presences, nonce=request.nonce)
             return await asyncio.wait_for(future, timeout=30.0)
         except asyncio.TimeoutError:
             log.warning('Timed out waiting for chunks with query %r and limit %d for guild_id %d', query, limit, guild_id)

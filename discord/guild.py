@@ -2074,7 +2074,7 @@ class Guild(Hashable):
 
         return await self._state.chunk_guild(self, cache=cache)
 
-    async def query_members(self, query=None, *, limit=5, user_ids=None, cache=True):
+    async def query_members(self, query, *, limit=5, user_ids=None, cache=False, presences=False):
         """|coro|
 
         Request members that belong to this guild whose username starts with
@@ -2124,7 +2124,11 @@ class Guild(Hashable):
             raise ValueError('Cannot pass both query and user_ids')
 
         limit = min(100, limit or 5)
-        return await self._state.query_members(self, query=query, limit=limit, user_ids=user_ids, cache=cache)
+        return await self._state.query_members(
+            self, query=query, limit=limit,
+            user_ids=user_ids,
+            presences=presences, cache=cache
+        )
 
     async def change_voice_state(self, *, channel, self_mute=False, self_deaf=False):
         """|coro|
