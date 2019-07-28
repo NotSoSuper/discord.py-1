@@ -65,6 +65,7 @@ class ChunkRequest:
         self.nonce = os.urandom(16).hex()
         self.future = future
         self.buffer = [] # List[Member]
+        self.presences = None
 
     def add_members(self, members):
         self.buffer.extend(members)
@@ -79,7 +80,10 @@ class ChunkRequest:
                     guild._add_member(member)
 
     def done(self):
-        self.future.set_result(self.buffer)
+        if self.presences:
+            self.future.set_result((self.buffer, self.presences))
+        else:
+            self.future.set_result(self.buffer)
 
 log = logging.getLogger(__name__)
 
@@ -196,7 +200,7 @@ class ConnectionState:
         # to reconnect loops which cause mass allocations and deallocations.
         gc.collect()
 
-    def process_chunk_requests(self, guild_id, nonce, members, complete):
+    def process_chunk_requests(self, guild_id, nonce, members, complete, presences):
         removed = []
         for i, request in enumerate(self._chunk_requests):
             future = request.future
@@ -206,6 +210,7 @@ class ConnectionState:
 
             if request.guild_id == guild_id and request.nonce == nonce:
                 request.add_members(members)
+                request.presences = presences
                 if complete:
                     request.done()
                     removed.append(i)
@@ -404,7 +409,18 @@ class ConnectionState:
         try:
             # start the query operation
             await ws.request_chunks(guild_id, query=query, limit=limit, user_ids=user_ids, presences=presences, nonce=request.nonce)
-            return await asyncio.wait_for(future, timeout=30.0)
+
+            members, presences = await asyncio.wait_for(future, timeout=30.0)
+
+            if presences:
+                presences_map = {int(x['user']['id']): i for i, x in enumerate(presences)}
+                for member in members:
+                    if member.id in presences_map:
+                        idx = presences_map[member.id]
+                        presence = presences[idx]
+                        member._presence_update(presence, presence['user'])
+
+            return members
         except asyncio.TimeoutError:
             log.warning('Timed out waiting for chunks with query %r and limit %d for guild_id %d', query, limit, guild_id)
             raise
@@ -971,7 +987,8 @@ class ConnectionState:
         members = [Member(guild=guild, data=member, state=self) for member in data.get('members', [])]
         log.debug('Processed a chunk for %s members in guild ID %s.', len(members), guild_id)
         complete = data.get('chunk_index', 0) + 1 == data.get('chunk_count')
-        self.process_chunk_requests(guild_id, data.get('nonce'), members, complete)
+        presences = ('presences' in data) and data['presences']
+        self.process_chunk_requests(guild_id, data.get('nonce'), members, complete, presences)
 
     def parse_guild_integrations_update(self, data):
         guild = self._get_guild(int(data['guild_id']))
