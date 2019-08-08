@@ -493,6 +493,9 @@ class DiscordWebSocket:
         event = msg.get('t')
 
         if event == 'READY':
+            # Add shard_id to data for state tracking
+            data['shard_id'] = self.shard_id
+
             self._trace = trace = data.get('_trace', [])
             self.sequence = msg['s']
             self.session_id = data['session_id']

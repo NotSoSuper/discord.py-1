@@ -501,7 +501,7 @@ class ConnectionState:
             factory, _ = _channel_factory(pm['type'])
             self._add_private_channel(factory(me=user, data=pm, state=self))
 
-        self.dispatch('connect')
+        self.dispatch('connect', data['shard_id'])
         self._ready_task = asyncio.ensure_future(self._delay_ready(), loop=self.loop)
 
     def parse_resumed(self, data):
