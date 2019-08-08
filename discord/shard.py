@@ -386,6 +386,7 @@ class AutoShardedClient(Client):
         try:
             coro = DiscordWebSocket.from_client(self, initial=initial, gateway=gateway, shard_id=shard_id)
             ws = await asyncio.wait_for(coro, timeout=180.0)
+            self.dispatch("ws_connect", shard_id)
         except Exception:
             log.exception('Failed to connect for shard_id: %s. Retrying...', shard_id)
             await asyncio.sleep(5.0)

@@ -297,6 +297,8 @@ class DiscordWebSocket:
         socket = await client.http.ws_connect(gateway)
         ws = cls(socket, loop=client.loop)
 
+        client.dispatch("ws_connect", shard_id)
+
         # dynamically add attributes needed
         ws.token = client.http.token
         ws._connection = client._connection
