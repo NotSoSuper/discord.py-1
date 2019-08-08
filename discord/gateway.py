@@ -406,7 +406,7 @@ class DiscordWebSocket:
         """Sends the RESUME packet."""
 
         # State tracking
-        self._dispatch('resuming', self)
+        self._dispatch('resuming', self.shard_id)
 
         payload = {
             'op': self.RESUME,
