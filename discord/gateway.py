@@ -402,6 +402,10 @@ class DiscordWebSocket:
 
     async def resume(self):
         """Sends the RESUME packet."""
+
+        # State tracking
+        self._dispatch('resuming', self)
+
         payload = {
             'op': self.RESUME,
             'd': {
@@ -498,6 +502,7 @@ class DiscordWebSocket:
                      self.shard_id, ', '.join(trace), self.session_id)
 
         elif event == 'RESUMED':
+            self._dispatch('resumed', self.shard_id)
             self._trace = trace = data.get('_trace', [])
             # pass back the shard ID to the resumed handler
             data['__shard_id__'] = self.shard_id
