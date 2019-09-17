@@ -294,10 +294,11 @@ class ConnectionState:
     def _remove_guild(self, guild):
         self._guilds.pop(guild.id, None)
 
-        for emoji in guild.emojis:
-            self._emojis.pop(emoji.id, None)
+        if guild.emojis:
+            for emoji in guild.emojis:
+                self._emojis.pop(emoji.id, None)
 
-        del guild
+            del guild
 
         # Much like clear(), if we have a massive deallocation
         # then it's better to explicitly call the GC
@@ -816,16 +817,17 @@ class ConnectionState:
             log.debug('GUILD_MEMBER_UPDATE referencing an unknown member ID: %s. Discarding.', user_id)
 
     def parse_guild_emojis_update(self, data):
-        guild = self._get_guild(int(data['guild_id']))
-        if guild is None:
-            log.debug('GUILD_EMOJIS_UPDATE referencing an unknown guild ID: %s. Discarding.', data['guild_id'])
-            return
+        pass
+        # guild = self._get_guild(int(data['guild_id']))
+        # if guild is None:
+        #     log.debug('GUILD_EMOJIS_UPDATE referencing an unknown guild ID: %s. Discarding.', data['guild_id'])
+        #     return
 
-        before_emojis = guild.emojis
-        for emoji in before_emojis:
-            self._emojis.pop(emoji.id, None)
-        guild.emojis = tuple(map(lambda d: self.store_emoji(guild, d), data['emojis']))
-        self.dispatch('guild_emojis_update', guild, before_emojis, guild.emojis)
+        # before_emojis = guild.emojis
+        # for emoji in before_emojis:
+        #     self._emojis.pop(emoji.id, None)
+        # guild.emojis = tuple(map(lambda d: self.store_emoji(guild, d), data['emojis']))
+        # self.dispatch('guild_emojis_update', guild, before_emojis, guild.emojis)
 
     def _get_create_guild(self, data):
         if data.get('unavailable') is False:
