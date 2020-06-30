@@ -640,7 +640,7 @@ class ConnectionState:
                 return
 
             member, old_member = Member._from_presence_update(guild=guild, data=data, state=self)
-            if flags.online or (flags._online_only and member.raw_status != 'offline'):
+            if self._cache_members or (flags.online or (flags._online_only and member.raw_status != 'offline')):
                 guild._add_member(member)
         else:
             old_member = Member._copy(member)
