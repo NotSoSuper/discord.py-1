@@ -392,8 +392,8 @@ class DiscordWebSocket:
             payload['d']['intents'] = state._intents.value
 
         await self.call_hooks('before_identify', self.shard_id, initial=self._initial_identify)
-            await self.send_as_json(payload)
-            log.info('Shard ID %s has sent the IDENTIFY payload.', self.shard_id)
+        await self.send_as_json(payload)
+        log.info('Shard ID %s has sent the IDENTIFY payload.', self.shard_id)
 
     async def resume(self):
         """Sends the RESUME packet."""
@@ -409,7 +409,6 @@ class DiscordWebSocket:
                 'token': self.token
             }
         }
-
         await self.send_as_json(payload)
         log.info('Shard ID %s has sent the RESUME payload.', self.shard_id)
 
