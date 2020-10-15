@@ -990,7 +990,7 @@ class ConnectionState:
         members = [Member(guild=guild, data=member, state=self) for member in data.get('members', [])]
         log.debug('Processed a chunk for %s members in guild ID %s.', len(members), guild_id)
         complete = data.get('chunk_index', 0) + 1 == data.get('chunk_count')
-        presences = ('presences' in data) and data['presences']
+        presences = data.get('presences', False)
         self.process_chunk_requests(guild_id, data.get('nonce'), members, complete, presences)
 
     def parse_guild_integrations_update(self, data):
